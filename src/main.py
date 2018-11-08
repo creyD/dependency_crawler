@@ -32,17 +32,6 @@ import argparse
 import os
 
 ### HELPER FUNCTIONS
-def splitter(string):
-	split = []
-	word = ''
-	for i in range(len(string)):
-		if string[i] == ' ' or string[i] == '.':
-			split.append(word)
-			word = ''
-		else:
-			word += string[i]
-	return split
-
 def deleteIfExist(fileName):
 	# Deletes a file with given path if it exists
 	if os.path.isfile(fileName):
