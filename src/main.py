@@ -2,7 +2,7 @@
 ### META
 __title__ = "DepCraw"
 __author__ = "Conrad Grosser"
-__version__ = "1.1"
+__version__ = "1.2"
 __branch__ = "STABLE"
 
 ### HELP
@@ -39,7 +39,6 @@ def deleteIfExist(fileName):
 
 ### FUNCTIONS
 def writeDependencies(fileName, data):
-	print('Writing requirements.txt...')
 	deleteIfExist(fileName)
 	# Open the file location
 	file = open(fileName, 'w+')
@@ -52,6 +51,12 @@ def writeDependencies(fileName, data):
 	file.close()
 	return 0
 
+def dupTester(newEntries, check):
+	for i in range(len(newEntries)):
+		if not newEntries[i] in check:
+			return False
+	return True
+
 def readFile(fileName):
 	dependencies = []
 	# Read the file and store it in a cache
@@ -62,13 +67,10 @@ def readFile(fileName):
 	# Search the cache for code lines that start with an import or from statement
 	for i in range(len(code)):
 		if code[i].startswith('import') or code[i].startswith('from'):
-			dependencies.append('-' + str(code[i].split()[1].split('.')[0]) + '\n')
-
-	if len(dependencies) != 0:
-		#message = '# From file ' + fileName + ' the following dependencies were initially added:\n'
-		#return [message] + dependencies
-		return dependencies
-	return ''
+			newDep = str(code[i].split()[1].split('.')[0])
+			if len(newDep) > 1:
+				dependencies.append('-' + newDep + '\n')
+	return list(set(dependencies))
 
 ### MAIN
 def main(args):
@@ -80,9 +82,12 @@ def main(args):
 	for root, subdirs, files in os.walk(args.input_path):
 		for filename in files:
 			if filename.endswith('.py'):
-				requirements += readFile(os.path.join(root, filename))
+				newDeps = readFile(os.path.join(root, filename))
+				if dupTester(newDeps, requirements):
+					message = '# From file ' + filename + ' the following dependencies were initially added:\n'
+					requirements += [message] + newDeps
 
-	writeDependencies((args.output_path + '/requirements.txt' if args.output_path else 'requirements.txt'), list(set(requirements)))
+	writeDependencies((args.output_path + '/requirements.txt' if args.output_path else 'requirements.txt'), requirements)
 
 	if args.timer: print('BENCHMARK: ' + __title__ + ' took ' + str((time.time() - startTime) * 1000) + ' seconds for executing.')
 	print('STATUS: ' + __title__ + ' ended.')
