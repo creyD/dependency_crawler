@@ -2,7 +2,7 @@
 ### META
 __title__ = "DepCraw"
 __author__ = "Conrad Grosser"
-__version__ = "1"
+__version__ = "1.1"
 __branch__ = "STABLE"
 
 ### HELP
@@ -73,14 +73,13 @@ def readFile(fileName):
 	# Search the cache for code lines that start with an import or from statement
 	for i in range(len(code)):
 		if code[i].startswith('import') or code[i].startswith('from'):
-			newDependency = code[i].split()[1].split('.')[0]
-			dependencies.append(newDependency + '\n')
+			dependencies.append('-' + str(code[i].split()[1].split('.')[0]) + '\n')
 
-	if len(dependencies) == 0:
-		return ''
-	else:
-		message = '# From file ' + fileName + ' the following dependencies were initially added:\n'
-		return [message] + dependencies
+	if len(dependencies) != 0:
+		#message = '# From file ' + fileName + ' the following dependencies were initially added:\n'
+		#return [message] + dependencies
+		return dependencies
+	return ''
 
 ### MAIN
 def main(args):
