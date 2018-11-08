@@ -27,10 +27,21 @@ import time
 # Importing default module argparse for argument parsing
 import argparse
 
+import os
+
 ### HELPER FUNCTIONS
+def splitter(string):
+	split = []
+	word = ''
+	for i in range(len(string)):
+		if string[i] == ' ' or string[i] == '.':
+			split.append(word)
+			word = ''
+		else:
+			word += string[i]
+	return split
 
 ### FUNCTIONS
-
 def writeDependencies(path, data):
 	print('Writing requirements.txt...')
 	# Open the file location
@@ -38,20 +49,44 @@ def writeDependencies(path, data):
 	file.write('# Automatically generated requirements/ dependencies\n')
 	# Write all the dependencies into the files
 	for i in range(len(data)):
-		file.write(data[i] + '\n')
+		file.write(data[i])
 	# Newline at end of file
 	file.write('\n')
 	file.close()
 	return 0
+
+def readFile(path):
+	dependencies = []
+	# Read the file and store it in a cache
+	file = open(path, 'r')
+	code = file.readlines()
+	file.close()
+
+	# Search the cache for code lines that start with an import or from statement
+	for i in range(len(code)):
+		if code[i].startswith('import') or code[i].startswith('from'):
+			dependencies.append(code[i].split()[1].split('.')[0] + '\n')
+
+	if len(dependencies) == 0:
+		return False
+	else:
+		message = '# From file ' + path + ' the following dependencies were added:\n'
+		return [message] + dependencies
 
 ### MAIN
 def main(args):
 	print('STATUS: ' + __title__ + ' started.')
 	if args.timer: startTime = time.time()
 
-	requirements = ['ye', 'ye', 'ye']
+	requirements = []
 
-	writeDependencies((args.input_path + '/requirements.txt' if args.input_path else 'requirements.txt'), requirements)
+	for root, subdirs, files in os.walk(args.input_path):
+		for filename in files:
+			if filename.endswith('.py'):
+				if readFile(os.path.join(root, filename)):
+					requirements += readFile(os.path.join(root, filename))
+
+	writeDependencies((args.output_path + '/requirements.txt' if args.output_path else 'requirements.txt'), requirements)
 
 	if args.timer: print('BENCHMARK: ' + __title__ + ' took ' + str((time.time() - startTime) * 1000) + ' seconds for executing.')
 	print('STATUS: ' + __title__ + ' ended.')
