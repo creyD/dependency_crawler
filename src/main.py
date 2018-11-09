@@ -15,6 +15,9 @@ __branch__ = "STABLE"
 # --project_name - Name of project, used for comments
 # PARAMETER - FUNCTION
 
+## TODO
+# - Add gitignore reader
+
 ## Functionality/ Usage
 # -> readme.md
 
@@ -34,6 +37,14 @@ def deleteIfExist(fileName):
 	if os.path.isfile(fileName):
 		os.remove(fileName)
 
+def chrossCheck(listInner, listOuter):
+	# Crosschecking a list with another list
+	result = []
+	for i in range(len(listInner)):
+		if not listInner[i] in listOuter:
+			result.append(listInner[i])
+	return result
+
 ### FUNCTIONS
 def writeDependencies(fileName, data, projectName):
 	deleteIfExist(fileName)
@@ -49,7 +60,7 @@ def writeDependencies(fileName, data, projectName):
 	file.close()
 	return 0
 
-def readFile(fileName):
+def readDependenciesFromFile(fileName):
 	dependencies = []
 	# Read the file and store it in a cache
 	file = open(fileName, 'r')
@@ -64,9 +75,8 @@ def readFile(fileName):
 				dependencies.append(newDep)
 	return list(set(dependencies))
 
-def getDefaults():
-	libary = []
-	std_lib = sysconfig.get_python_lib(standard_lib=True)
+def getPythonDefaultLibary():
+	libary, std_lib = [], sysconfig.get_python_lib(standard_lib=True)
 	for top, dirs, files in os.walk(std_lib):
 		for nm in files:
 			if nm != '__init__.py' and nm[-3:] == '.py':
@@ -78,15 +88,7 @@ def getDefaults():
 	libary.append('sys')
 	libary.append('time')
 	libary.append('urllib')
-	libary.append('HDB')
 	return libary
-
-def checkStandard(requirementsList, defaultList):
-	requirements = []
-	for i in range(len(requirementsList)):
-		if not requirementsList[i] in defaultList:
-			requirements.append(requirementsList[i])
-	return requirements
 
 ### MAIN
 def main(args):
@@ -97,14 +99,14 @@ def main(args):
 
 	for root, subdirs, files in os.walk(args.input_path):
 		for filename in files:
-			print('Checking ' + str(filename) + '...')
 			if filename.endswith('.py') and not filename == '__init__.py':
-				requirements += readFile(os.path.join(root, filename))
+				print('Checking ' + str(filename) + '...')
+				requirements += readDependenciesFromFile(os.path.join(root, filename))
 
-	writeDependencies(os.path.join(args.output_path + args.output_name), checkStandard(list(set(requirements)), getDefaults()), args.project_name)
+	writeDependencies(os.path.join(args.output_path + args.output_name), chrossCheck(list(set(requirements)), getPythonDefaultLibary()), args.project_name)
 
 	if args.timer: print('BENCHMARK: ' + __title__ + ' took ' + str((time.time() - startTime) * 1000) + ' seconds for executing.')
-	print('STATUS: ' + __title__ + ' ended.')
+	print('STATUS: ' + __title__ + ' successfully .')
 	return
 
 ### CALL
