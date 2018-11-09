@@ -18,11 +18,6 @@ __branch__ = "STABLE"
 ## Functionality/ Usage
 # -> readme.md
 
-## TODO
-
-## Known Issues
-# - If a file imports only modules already considered in the requirements it will still show up in the final file
-
 ### IMPORTS
 # Importing time for benchmark
 import time
@@ -102,13 +97,11 @@ def main(args):
 
 	for root, subdirs, files in os.walk(args.input_path):
 		for filename in files:
+			print('Checking ' + str(filename) + '...')
 			if filename.endswith('.py') and not filename == '__init__.py':
-				#message = '# From file ' + filename + ' the following dependencies were initially added:\n'
 				requirements += readFile(os.path.join(root, filename))
 
-	requirements = checkStandard(list(set(requirements)), getDefaults())
-
-	writeDependencies(os.path.join(args.output_path + args.output_name), requirements, args.project_name)
+	writeDependencies(os.path.join(args.output_path + args.output_name), checkStandard(list(set(requirements)), getDefaults()), args.project_name)
 
 	if args.timer: print('BENCHMARK: ' + __title__ + ' took ' + str((time.time() - startTime) * 1000) + ' seconds for executing.')
 	print('STATUS: ' + __title__ + ' ended.')
