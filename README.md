@@ -19,7 +19,7 @@ This tool provides the opportunity to search a Python project and creating a "re
 * --input_path - Project path for dependency check
 * --output_path - Path for requirements.txt storage
 * --debug - Activate debug mode (No automatic error catching!)
-* --output_name - Name of output file (default: requirements.txt)
+* --output_name - Name of output file (Default: requirements.txt)
 * --project_name - Name of project, used for comments
 
 ### Contribution guidelines ###

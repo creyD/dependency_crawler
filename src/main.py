@@ -45,6 +45,12 @@ def chrossCheck(listInner, listOuter):
 			result.append(listInner[i])
 	return result
 
+def readFile(filePath):
+	file = open(filePath, 'r')
+	content = file.readlines()
+	file.close()
+	return content
+
 ### FUNCTIONS
 def writeDependencies(fileName, data, projectName):
 	deleteIfExist(fileName)
@@ -63,9 +69,7 @@ def writeDependencies(fileName, data, projectName):
 def readDependenciesFromFile(fileName):
 	dependencies = []
 	# Read the file and store it in a cache
-	file = open(fileName, 'r')
-	code = file.readlines()
-	file.close()
+	code = readFile(fileName)
 
 	# Search the cache for code lines that start with an import or from statement
 	for i in range(len(code)):
@@ -76,6 +80,7 @@ def readDependenciesFromFile(fileName):
 	return list(set(dependencies))
 
 def getPythonDefaultLibary():
+	# Thanks to Stackoverflow user Caspar (https://stackoverflow.com/users/775982/caspar)
 	libary, std_lib = [], sysconfig.get_python_lib(standard_lib=True)
 	for top, dirs, files in os.walk(std_lib):
 		for nm in files:
@@ -127,4 +132,4 @@ else:
 	try:
 		main(args)
 	except:
-		print('ERROR: Something went wrong. Thanks Microsoft!')
+		print('ERROR: Something went wrong. Thank you Microsoft!')
