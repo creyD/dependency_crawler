@@ -2,7 +2,7 @@
 ### META
 __title__ = "DepCraw"
 __author__ = "Conrad Grosser"
-__version__ = "1.2"
+__version__ = "1.5"
 __branch__ = "STABLE"
 
 ### HELP
@@ -11,6 +11,8 @@ __branch__ = "STABLE"
 # --input_path - Project path for dependency check
 # --output_path - Path for requirements.txt storage
 # --debug - Activate debug mode (No automatic error catching!)
+# --output_name - Name of output file (default: requirements.txt)
+# --project_name - Name of project, used for comments
 # PARAMETER - FUNCTION
 
 ## Functionality/ Usage
@@ -22,14 +24,14 @@ __branch__ = "STABLE"
 # - If a file imports only modules already considered in the requirements it will still show up in the final file
 
 ### IMPORTS
-# Importing sys for argument handling
-import sys
 # Importing time for benchmark
 import time
 # Importing default module argparse for argument parsing
 import argparse
 # Importing os for file handling
 import os
+# Importing module for getting the default libary modules
+import distutils.sysconfig as sysconfig
 
 ### HELPER FUNCTIONS
 def deleteIfExist(fileName):
@@ -38,24 +40,19 @@ def deleteIfExist(fileName):
 		os.remove(fileName)
 
 ### FUNCTIONS
-def writeDependencies(fileName, data):
+def writeDependencies(fileName, data, projectName):
 	deleteIfExist(fileName)
 	# Open the file location
 	file = open(fileName, 'w+')
+	file.write('# Project: ' + projectName + '\n')
 	file.write('# Automatically generated requirements/ dependencies\n')
 	# Write all the dependencies into the files
 	for i in range(len(data)):
-		file.write(data[i])
+		file.write(data[i] + '\n')
 	# Newline at end of file
 	file.write('\n')
 	file.close()
 	return 0
-
-def dupTester(newEntries, check):
-	for i in range(len(newEntries)):
-		if not newEntries[i] in check:
-			return False
-	return True
 
 def readFile(fileName):
 	dependencies = []
@@ -69,8 +66,32 @@ def readFile(fileName):
 		if code[i].startswith('import') or code[i].startswith('from'):
 			newDep = str(code[i].split()[1].split('.')[0])
 			if len(newDep) > 1:
-				dependencies.append('-' + newDep + '\n')
+				dependencies.append(newDep)
 	return list(set(dependencies))
+
+def getDefaults():
+	libary = []
+	std_lib = sysconfig.get_python_lib(standard_lib=True)
+	for top, dirs, files in os.walk(std_lib):
+		for nm in files:
+			if nm != '__init__.py' and nm[-3:] == '.py':
+				package = os.path.join(top, nm)[len(std_lib)+1:-3].replace('\\','.')
+				if not ('site-package' in package):
+					# Adding the pip styling for comparability
+					libary.append(package)
+	# Manually adding, bcs they don't count as as standard modules
+	libary.append('sys')
+	libary.append('time')
+	libary.append('urllib')
+	libary.append('HDB')
+	return libary
+
+def checkStandard(requirementsList, defaultList):
+	requirements = []
+	for i in range(len(requirementsList)):
+		if not requirementsList[i] in defaultList:
+			requirements.append(requirementsList[i])
+	return requirements
 
 ### MAIN
 def main(args):
@@ -81,13 +102,13 @@ def main(args):
 
 	for root, subdirs, files in os.walk(args.input_path):
 		for filename in files:
-			if filename.endswith('.py'):
-				newDeps = readFile(os.path.join(root, filename))
-				if dupTester(newDeps, requirements):
-					message = '# From file ' + filename + ' the following dependencies were initially added:\n'
-					requirements += [message] + newDeps
+			if filename.endswith('.py') and not filename == '__init__.py':
+				#message = '# From file ' + filename + ' the following dependencies were initially added:\n'
+				requirements += readFile(os.path.join(root, filename))
 
-	writeDependencies((args.output_path + '/requirements.txt' if args.output_path else 'requirements.txt'), requirements)
+	requirements = checkStandard(list(set(requirements)), getDefaults())
+
+	writeDependencies(os.path.join(args.output_path + args.output_name), requirements, args.project_name)
 
 	if args.timer: print('BENCHMARK: ' + __title__ + ' took ' + str((time.time() - startTime) * 1000) + ' seconds for executing.')
 	print('STATUS: ' + __title__ + ' ended.')
@@ -100,6 +121,9 @@ parser.add_argument('--timer', nargs='?', const=True, default=False, type=bool)
 parser.add_argument('--input_path', nargs='?', const=True, default='', type=str)
 parser.add_argument('--output_path', nargs='?', const=True, default='', type=str)
 parser.add_argument('--debug', nargs='?', const=True, default=False, type=bool)
+parser.add_argument('--project_name', nargs='?', const=True, default='No Name Given', type=str)
+parser.add_argument('--output_name', nargs='?', const=True, default='requirements.txt', type=str)
+
 args = parser.parse_args()
 
 if args.debug:
