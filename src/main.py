@@ -13,10 +13,8 @@ __branch__ = "STABLE"
 # --debug - Activate debug mode (No automatic error catching!)
 # --output_name - Name of output file (default: requirements.txt)
 # --project_name - Name of project, used for comments
+# --git_ignore - Path of the gitignore file (if existend)
 # PARAMETER - FUNCTION
-
-## TODO
-# - Add gitignore reader
 
 ## Functionality/ Usage
 # -> readme.md
@@ -79,13 +77,28 @@ def readDependenciesFromFile(fileName):
 				dependencies.append(newDep)
 	return list(set(dependencies))
 
+def readGitIgnoresFromFile(fileName):
+	ignoredFiles = []
+	ignoredFolders = []
+
+	ignored = readFile(fileName)
+
+	for i in range(len(ignored)):
+		if not (ignored[i].startswith('#') or len(ignored[i]) <= 2):
+			if ignored[i].endswith('/'):
+				ignoredFolders.append(ignored[i])
+			else:
+				ignoredFiles.append(ignored[i])
+
+	return ignoredFiles
+
 def getPythonDefaultLibary():
 	# Thanks to Stackoverflow user Caspar (https://stackoverflow.com/users/775982/caspar)
 	libary, std_lib = [], sysconfig.get_python_lib(standard_lib=True)
 	for top, dirs, files in os.walk(std_lib):
-		for nm in files:
-			if nm != '__init__.py' and nm[-3:] == '.py':
-				package = os.path.join(top, nm)[len(std_lib)+1:-3].replace('\\','.')
+		for fileName in files:
+			if fileName != '__init__.py' and fileName[-3:] == '.py':
+				package = os.path.join(top, fileName)[len(std_lib)+1:-3].replace('\\','.')
 				if not ('site-package' in package):
 					# Adding the pip styling for comparability
 					libary.append(package)
@@ -101,10 +114,12 @@ def main(args):
 	if args.timer: startTime = time.time()
 
 	requirements = []
+	gitIgnoredFiles = readGitIgnoresFromFile(args.git_ignore)
+	print(gitIgnoredFiles)
 
 	for root, subdirs, files in os.walk(args.input_path):
 		for filename in files:
-			if filename.endswith('.py') and not filename == '__init__.py':
+			if filename.endswith('.py') and not filename == '__init__.py' and not filename in gitIgnoredFiles:
 				print('Checking ' + str(filename) + '...')
 				requirements += readDependenciesFromFile(os.path.join(root, filename))
 
@@ -123,6 +138,7 @@ parser.add_argument('--output_path', nargs='?', const=True, default='', type=str
 parser.add_argument('--debug', nargs='?', const=True, default=False, type=bool)
 parser.add_argument('--project_name', nargs='?', const=True, default='No Name Given', type=str)
 parser.add_argument('--output_name', nargs='?', const=True, default='requirements.txt', type=str)
+parser.add_argument('--git_ignore', nargs='?', const=True, default='', type=str)
 
 args = parser.parse_args()
 
