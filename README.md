@@ -28,8 +28,9 @@ This tool provides the opportunity to search a Python project and creating a "re
 * Implement your feature
 * Test the feature properly
 * Create a pull request, with explanation of your feature, proof of your tests and a contact person for any further questions
+* Wait for approval
 * Profit.
 
 ### Who do I talk to? ###
 
-* If you want to contribute contact one of the GBI admins (Tillmann or Conrad).
+* If you want to contribute contact me (grosserconrad@gmail.com).
